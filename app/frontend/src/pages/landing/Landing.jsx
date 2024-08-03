@@ -1,7 +1,18 @@
 import styled from "styled-components";
-import Paragraph from "../components/Paragraph";
+import Paragraph from "./Paragraph";
+import { useNavigate } from "react-router-dom";
+import List from "./List";
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const features = [
+    "Indicates reading progress so users can quickly identify what they have already read.",
+    "Provides contextual explanations for individual sentences using GPT.",
+    "Visualizes reading progress.",
+    "Allows users to add their own notes, breaking paragraphs for easier reading.",
+    "Highlights significant sentences for easy reference.",
+  ];
+
   return (
     <Container>
       <StyledContainer>
@@ -9,12 +20,22 @@ const Landing = () => {
         <h2>Optimize Your Reading Experience</h2>
 
         <div className="button-container">
-          <StyledButton>Log In</StyledButton>
-          <StyledButton>Sign Up</StyledButton>
+          <StyledButton onClick={() => navigate("/login")}>Log In</StyledButton>
+          <StyledButton onClick={() => navigate("/register")}>
+            Sign Up
+          </StyledButton>
         </div>
       </StyledContainer>
 
-      <Paragraph header="Hello" description="hello" />
+      <Paragraph
+        header="What is FlowSense?"
+        description="FlowSense is an innovative reading tool designed to assist users in dissecting complex information more efficiently. By leveraging interactive, visual, and assistive features, FlowSense helps users stay focused and engaged while reading advanced reports, textbooks, news articles, and more."
+      />
+      <Paragraph
+        header="Why FlowSense?"
+        description="At FlowSense, our team is dedicated to enhancing your reading experience. During our internships and professional experiences, we frequently encountered challenges in digesting extensive and intricate reports. We realized that traditional reading methods were not sufficient to keep up with the pace and volume of information we needed to process."
+      />
+      <List header="Our Key Features" listItems={features} />
     </Container>
   );
 };
@@ -34,6 +55,7 @@ const StyledContainer = styled.div`
 
   h1 {
     margin: 0;
+    margin-top: 50px;
     font-size: 140px;
     font-weight: 900;
     color: white;
@@ -60,7 +82,7 @@ const StyledContainer = styled.div`
   }
 `;
 
-const StyledButton = styled.div`
+const StyledButton = styled.button`
   background: linear-gradient(
     45deg,
     #ff6b6b,
