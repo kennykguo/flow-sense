@@ -10,7 +10,6 @@ def extract_text():
         page_data = {'page': page_num, 'words': words, 'width': page.rect.width, 'height': page.rect.height,}
         text_data.append(page_data)
     
-    print(text_data[0]['height'])
     return text_data
     
 def extract_sentences(text_data):

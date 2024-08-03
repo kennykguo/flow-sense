@@ -2,8 +2,7 @@ import styled from "styled-components";
 import SideToolkit from "./SideToolkit";
 import ToolSelection from "./ToolSection";
 import FlowSenseLogo from "./left-bar/FlowSenseLogo";
-import { useState } from "react";
-import randomPdf from "./random.pdf";
+import PdfViewer from "./PDFViewer";
 
 const Container = styled.div`
   width: 100vw;
@@ -26,14 +25,7 @@ function EditPage() {
         </ToolSelection>
       </SideToolkit>
 
-      {/* <div onMouseUp={handleMouseUp}>
-        <object
-          className="pdf"
-          data={randomPdf}
-          width="800"
-          height="500"
-        ></object>
-      </div> */}
+      <PdfViewer />
 
       <SideToolkit>
         <div></div>
