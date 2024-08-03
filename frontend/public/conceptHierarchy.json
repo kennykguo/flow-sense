@@ -1,0 +1,545 @@
+{
+  "name": "Root",
+  "children": [
+    {
+      "name": "Machine Learning Paper",
+      "children": [
+        {
+          "name": "Attention Is All You Need",
+          "children": [
+            {
+              "name": "Abstract",
+              "children": [
+                {
+                  "name": "Sequence transduction models",
+                  "children": [
+                    {
+                      "name": "Based on complex recurrent or convolutional neural networks"
+                    },
+                    {
+                      "name": "Encoder and decoder architecture",
+                      "children": [
+                        {
+                          "name": "Connected through attention mechanism"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Introduction",
+              "children": [
+                {
+                  "name": "Recurrent neural networks",
+                  "children": [
+                    {
+                      "name": "State of the art in sequence modeling"
+                    }
+                  ]
+                },
+                {
+                  "name": "Attention mechanisms",
+                  "children": [
+                    {
+                      "name": "Integral part of sequence modeling",
+                      "children": [
+                        {
+                          "name": "Dependencies modeling without distance consideration"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Background",
+              "children": [
+                {
+                  "name": "Sequence computation",
+                  "children": [
+                    {
+                      "name": "Extended Neural GPU, ByteNet, ConvS2S",
+                      "children": [
+                        {
+                          "name": "Using convolutional neural networks",
+                          "children": [
+                            {
+                              "name": "Computing hidden representations in parallel"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Self-attention",
+                  "children": [
+                    {
+                      "name": "Relation between positions in a single sequence",
+                      "children": [
+                        {
+                          "name": "Used in various tasks"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "End-to-end memory networks",
+                  "children": [
+                    {
+                      "name": "Recurrent attention mechanism"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Model Architecture",
+              "children": [
+                {
+                  "name": "Encoder and Decoder Stacks",
+                  "children": [
+                    {
+                      "name": "Encoder",
+                      "children": [
+                        {
+                          "name": "Stacked identical layers",
+                          "children": [
+                            {
+                              "name": "Multi-head self-attention mechanism"
+                            },
+                            {
+                              "name": "Position-wise fully connected feed-forward network"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Decoder",
+                      "children": [
+                        {
+                          "name": "Stacked identical layers",
+                          "children": [
+                            {
+                              "name": "Multi-head attention over encoder output"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Attention",
+                  "children": [
+                    {
+                      "name": "Scaled Dot-Product Attention",
+                      "children": [
+                        {
+                          "name": "Mapping query and key-value pairs"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Multi-Head Attention",
+                      "children": [
+                        {
+                          "name": "Linearly projecting queries, keys, and values"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Position-wise Feed-Forward Networks",
+                  "children": [
+                    {
+                      "name": "Fully connected feed-forward network in each layer"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Machine Learning Paper",
+      "children": [
+        {
+          "name": "Model Architecture",
+          "children": [
+            {
+              "name": "Dimensionality",
+              "children": [
+                {
+                  "name": "Input and Output: dmodel = 512"
+                },
+                {
+                  "name": "Inner-layer: dff = 2048"
+                }
+              ]
+            },
+            {
+              "name": "Embeddings and Softmax",
+              "children": [
+                {
+                  "name": "Learned embeddings"
+                },
+                {
+                  "name": "Linear transformation and softmax function"
+                },
+                {
+                  "name": "Weight matrix sharing"
+                }
+              ]
+            },
+            {
+              "name": "Positional Encoding",
+              "children": [
+                {
+                  "name": "Order of sequence"
+                },
+                {
+                  "name": "Positional encodings",
+                  "children": [
+                    {
+                      "name": "Sine and cosine functions"
+                    },
+                    {
+                      "name": "Learned vs fixed positional encodings"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Self-Attention",
+          "children": [
+            {
+              "name": "Computational complexity"
+            },
+            {
+              "name": "Parallelization of computation"
+            },
+            {
+              "name": "Path length between long-range dependencies"
+            }
+          ]
+        },
+        {
+          "name": "Training",
+          "children": [
+            {
+              "name": "Training Data and Batching"
+            },
+            {
+              "name": "Hardware and Schedule"
+            },
+            {
+              "name": "Optimizer"
+            },
+            {
+              "name": "Regularization"
+            }
+          ]
+        },
+        {
+          "name": "Results",
+          "children": [
+            {
+              "name": "Machine Translation",
+              "children": [
+                {
+                  "name": "English-to-German"
+                },
+                {
+                  "name": "English-to-French"
+                }
+              ]
+            },
+            {
+              "name": "Model Variations"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Machine Learning Paper",
+      "children": [
+        {
+          "name": "Transformer Model",
+          "children": [
+            {
+              "name": "Attention Mechanism",
+              "children": [
+                {
+                  "name": "Multi-Headed Self-Attention"
+                }
+              ]
+            },
+            {
+              "name": "Sequence Transduction Model",
+              "children": [
+                {
+                  "name": "Encoder-Decoder Architectures",
+                  "children": [
+                    {
+                      "name": "Recurrent Layers",
+                      "children": [
+                        {
+                          "name": "RNN Sequence-to-Sequence Models",
+                          "children": [
+                            {
+                              "name": "Long Short-Term Memory (LSTM)",
+                              "children": [
+                                {
+                                  "name": "Gated Recurrent Neural Networks (GRNN)",
+                                  "children": [
+                                    {
+                                      "name": "Neural GPUs"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Convolutional Layers",
+                          "children": [
+                            {
+                              "name": "Xception"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Training Techniques",
+              "children": [
+                {
+                  "name": "Dropout"
+                },
+                {
+                  "name": "Learning Rates"
+                },
+                {
+                  "name": "Semi-Supervised Learning",
+                  "children": [
+                    {
+                      "name": "Large Data Regimes"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Model Evaluation",
+              "children": [
+                {
+                  "name": "English Constituency Parsing",
+                  "children": [
+                    {
+                      "name": "Wall Street Journal (WSJ) Dataset",
+                      "children": [
+                        {
+                          "name": "Penn Treebank"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Task Generalization"
+                },
+                {
+                  "name": "Model Performance Comparison"
+                }
+              ]
+            },
+            {
+              "name": "Future Research Directions",
+              "children": [
+                {
+                  "name": "Input and Output Modalities",
+                  "children": [
+                    {
+                      "name": "Images"
+                    },
+                    {
+                      "name": "Audio"
+                    },
+                    {
+                      "name": "Video"
+                    }
+                  ]
+                },
+                {
+                  "name": "Local Attention Mechanisms"
+                },
+                {
+                  "name": "Non-Sequential Generation",
+                  "children": [
+                    {
+                      "name": "Handling Large Inputs and Outputs",
+                      "children": [
+                        {
+                          "name": "Image Recognition"
+                        },
+                        {
+                          "name": "Speech Recognition",
+                          "children": [
+                            {
+                              "name": "Neural Machine Translation"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Model Implementation",
+          "children": [
+            {
+              "name": "Code Availability",
+              "children": [
+                {
+                  "name": "GitHub Repository"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Acknowledgements",
+          "children": [
+            {
+              "name": "Contributions",
+              "children": [
+                {
+                  "name": "Comments"
+                },
+                {
+                  "name": "Corrections"
+                },
+                {
+                  "name": "Inspiration"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "References",
+          "children": [
+            {
+              "name": "Published Works",
+              "children": [
+                {
+                  "name": "Layer Normalization"
+                },
+                {
+                  "name": "Neural Machine Translation",
+                  "children": [
+                    {
+                      "name": "Joint Learning to Align and Translate"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Attention Mechanism",
+      "children": [
+        {
+          "name": "Encoder Self-Attention",
+          "children": [
+            {
+              "name": "Layer 5 of 6",
+              "children": [
+                {
+                  "name": "Long-Distance Dependencies",
+                  "children": [
+                    {
+                      "name": "Attending to Distant Dependency of the Verb 'making'",
+                      "children": [
+                        {
+                          "name": "Completing the Phrase 'making...more difficult'"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Anaphora Resolution",
+                  "children": [
+                    {
+                      "name": "Involvement of Attention Heads",
+                      "children": [
+                        {
+                          "name": "Attentions for the Word 'its'",
+                          "children": [
+                            {
+                              "name": "Isolated Attentions from Different Heads"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Learned Tasks",
+          "children": [
+            {
+              "name": "Structure of the Sentence",
+              "children": [
+                {
+                  "name": "Behavior Related to Sentence Structure",
+                  "children": [
+                    {
+                      "name": "Examples from Different Heads",
+                      "children": [
+                        {
+                          "name": "Encoder Self-Attention at Layer 5 of 6"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
