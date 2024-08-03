@@ -1,13 +1,36 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Worker, Viewer } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import * as pdfjsLib from 'pdfjs-dist';
-import api from '../api'; // Import the API utility
-import '../styles/Home.css'; // Import CSS file for highlighting
+import api from '../api'; // Ensure this points to your API utility
+import '../styles/Home.css';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught in ErrorBoundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h1>Something went wrong.</h1>;
+    }
+
+    return this.props.children;
+  }
+}
 
 const PDFViewer = () => {
   const viewerRef = useRef(null);
@@ -16,34 +39,31 @@ const PDFViewer = () => {
   const [notes, setNotes] = useState([]);
   const [title, setTitle] = useState('');
   const [gptResponse, setGptResponse] = useState('');
+  const [pdfFile, setPdfFile] = useState(null);
+  const [uploadedPapers, setUploadedPapers] = useState([]);
+  const [selectedPaperId, setSelectedPaperId] = useState(null);
+  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState([]);
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
   useEffect(() => {
     const handleTextDoubleClick = async (event) => {
       const target = event.target;
-    
-      // Check if the double-clicked element is a text span
+
       if (target && target.classList.contains('rpv-core__text-layer-text')) {
-        // Remove highlight from previously highlighted span
         if (highlightedSpan) {
           highlightedSpan.classList.remove('highlight');
         }
-    
-        // Highlight the clicked span
+
         target.classList.add('highlight');
         setHighlightedSpan(target);
-    
-        // Get the current highlighted text
+
         const currentText = target.textContent;
-    
-        // Debugging output
+
         console.log('Highlighted text:', currentText);
-    
-        // Send data to the backend
+
         try {
-          const response = await api.post('/api/explain/', {
-            current_text: currentText
-          });
+          const response = await api.post('/api/explain/', { current_text: currentText });
           setGptResponse(response.data.explanation);
         } catch (err) {
           console.error('Error during API request:', err);
@@ -51,8 +71,6 @@ const PDFViewer = () => {
         }
       }
     };
-
-    
 
     const container = viewerRef.current;
     container.addEventListener('dblclick', handleTextDoubleClick);
@@ -63,14 +81,35 @@ const PDFViewer = () => {
   }, [highlightedSpan]);
 
   useEffect(() => {
-    // Fetch existing notes from the backend when the component mounts
     getNotes();
+    fetchUploadedPapers();
   }, []);
+
+  useEffect(() => {
+    if (selectedPaperId) {
+      fetchComments(selectedPaperId);
+    }
+  }, [selectedPaperId]);
 
   const getNotes = () => {
     api.get('/api/notes/')
       .then((res) => setNotes(res.data))
-      .catch((err) => alert(err));
+      .catch((err) => alert('Failed to fetch notes.'));
+  };
+
+  const fetchUploadedPapers = () => {
+    api.get('/api/papers/')
+      .then((res) => {
+        console.log('Fetched papers:', res.data); // Debugging line
+        setUploadedPapers(res.data);
+      })
+      .catch((err) => alert('Failed to fetch papers.'));
+  };
+
+  const fetchComments = (paperId) => {
+    api.get(`/api/papers/${paperId}/comments/`)
+      .then((res) => setComments(res.data))
+      .catch((err) => alert('Failed to fetch comments.'));
   };
 
   const createNote = (e) => {
@@ -79,12 +118,12 @@ const PDFViewer = () => {
       .then((res) => {
         if (res.status === 201) {
           alert('Note created!');
-          getNotes(); // Refresh the notes list
+          getNotes();
         } else {
           alert('Failed to create note.');
         }
       })
-      .catch((err) => alert(err));
+      .catch((err) => alert('Failed to create note.'));
   };
 
   const deleteNote = (id) => {
@@ -92,76 +131,161 @@ const PDFViewer = () => {
       .then((res) => {
         if (res.status === 204) {
           alert('Note deleted!');
-          getNotes(); // Refresh the notes list
+          getNotes();
         } else {
           alert('Failed to delete note.');
         }
       })
-      .catch((err) => alert(err));
+      .catch((err) => alert('Failed to delete note.'));
+  };
+
+  const createComment = (e) => {
+    e.preventDefault();
+    api.post(`/api/papers/${selectedPaperId}/comments/`, { content: comment })
+      .then((res) => {
+        if (res.status === 201) {
+          alert('Comment created!');
+          fetchComments(selectedPaperId);
+        } else {
+          alert('Failed to create comment.');
+        }
+      })
+      .catch((err) => alert('Failed to create comment.'));
+  };
+
+  const deleteComment = (id) => {
+    api.delete(`/api/comments/delete/${id}/`)
+      .then((res) => {
+        if (res.status === 204) {
+          alert('Comment deleted!');
+          fetchComments(selectedPaperId);
+        } else {
+          alert('Failed to delete comment.');
+        }
+      })
+      .catch((err) => alert('Failed to delete comment.'));
   };
 
   const handleNoteChange = (event) => {
     setNote(event.target.value);
   };
 
+  const handleCommentChange = (event) => {
+    setComment(event.target.value);
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type === 'application/pdf') {
+        setPdfFile(URL.createObjectURL(file)); // Creates a temporary URL for file preview
+        const formData = new FormData();
+        formData.append('file', file);
+
+        api.post('/api/upload/', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data' // Ensure correct content type
+            }
+        })
+        .then((res) => {
+            if (res.status === 200) {
+                fetchUploadedPapers(); // Fetch updated list of papers after upload
+            } else {
+                alert('Failed to upload PDF.');
+            }
+        })
+        .catch((err) => alert('Failed to upload PDF.'));
+    } else {
+        alert('Please upload a valid PDF file.');
+    }
+  };
+
   return (
-    <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>
-      <div
-        ref={viewerRef}
-        style={{ flex: 1, overflow: 'auto', position: 'relative' }}
-      >
-        <Worker workerUrl={`https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`}>
-          <Viewer
-            fileUrl="./example_research_paper.pdf"
-            plugins={[defaultLayoutPluginInstance]}
-          />
-        </Worker>
-      </div>
-      <div style={{ width: '300px', padding: '10px', borderLeft: '1px solid #ddd', backgroundColor: '#f5f5f5' }}>
-        <h3>Create a Note</h3>
-        <form onSubmit={createNote}>
-          <label htmlFor="title">Title:</label>
-          <br />
+    <ErrorBoundary>
+      <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>
+        <div
+          ref={viewerRef}
+          style={{ flex: 1, overflow: 'auto', position: 'relative' }}
+        >
           <input
-            type="text"
-            id="title"
-            name="title"
-            required
-            onChange={(e) => setTitle(e.target.value)}
-            value={title}
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+            style={{ margin: '10px', display: 'block' }}
           />
-          <label htmlFor="content">Content:</label>
-          <br />
-          <textarea
-            id="content"
-            name="content"
-            required
-            value={note}
-            onChange={handleNoteChange}
-            style={{ width: '100%', height: '150px' }}
-          ></textarea>
-          <br />
-          <input type="submit" value="Submit" />
-        </form>
-        <h3>Existing Notes</h3>
-        <ul>
+          {pdfFile && (
+            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`}>
+              <Viewer fileUrl={pdfFile} plugins={[defaultLayoutPluginInstance]} />
+            </Worker>
+          )}
+        </div>
+        <div style={{ width: '300px', padding: '20px' }}>
+          <h2>Notes</h2>
+          <form onSubmit={createNote}>
+            <input
+              type="text"
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={{ width: '100%', marginBottom: '10px' }}
+            />
+            <textarea
+              placeholder="Note content"
+              value={note}
+              onChange={handleNoteChange}
+              style={{ width: '100%', height: '100px', marginBottom: '10px' }}
+            />
+            <button type="submit">Create Note</button>
+          </form>
           {notes.map((note) => (
-            <li key={note.id}>
-              <strong>{note.title}:</strong> {note.content}
-              <button onClick={() => deleteNote(note.id)} style={{ marginLeft: '10px' }}>
-                Delete
-              </button>
-            </li>
+            <div key={note.id}>
+              <h3>{note.title}</h3>
+              <p>{note.content}</p>
+              <button onClick={() => deleteNote(note.id)}>Delete Note</button>
+            </div>
           ))}
-        </ul>
-        {gptResponse && (
-          <div style={{ marginTop: '20px' }}>
-            <h3>GPT Explanation</h3>
-            <p>{gptResponse}</p>
-          </div>
-        )}
+          <h2>Uploaded Papers</h2>
+          {uploadedPapers.length > 0 ? (
+            uploadedPapers.map((paper) => (
+              <div key={paper.id} style={{ margin: '10px', width: '200px' }}>
+                <a href={paper.file} target="_blank" rel="noopener noreferrer">
+                  <img src={paper.banner_url} alt={paper.title} style={{ width: '100%', height: 'auto' }} />
+                </a>
+                <p>{paper.title}</p>
+                <button onClick={() => setSelectedPaperId(paper.id)}>View Comments</button>
+              </div>
+            ))
+          ) : (
+            <p>No papers uploaded yet.</p>
+          )}
+          {selectedPaperId && (
+            <div>
+              <h2>Comments for Paper {selectedPaperId}</h2>
+              <form onSubmit={createComment}>
+                <textarea
+                  placeholder="Add a comment"
+                  value={comment}
+                  onChange={handleCommentChange}
+                  style={{ width: '100%', height: '100px', marginBottom: '10px' }}
+                />
+                <button type="submit">Add Comment</button>
+              </form>
+              {comments.map((comment) => (
+                <div key={comment.id}>
+                  <p>{comment.content}</p>
+                  <button onClick={() => deleteComment(comment.id)}>Delete Comment</button>
+                </div>
+              ))}
+            </div>
+          )}
+          {gptResponse && (
+            <div>
+              <h2>GPT Explanation</h2>
+              <p>{gptResponse}</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 
