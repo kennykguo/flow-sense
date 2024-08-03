@@ -12,7 +12,7 @@ const Paragraph = ({ header, description }) => {
 export default Paragraph;
 
 const StyledComponent = styled.div`
-  padding: 40px;
+  padding: 10px 40px;
   margin: 10px auto;
   border-radius: 12px;
   max-width: 1500px;

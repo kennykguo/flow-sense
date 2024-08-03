@@ -16,7 +16,7 @@ const List = ({ header, listItems }) => {
 export default List;
 
 const StyledComponent = styled.div`
-  padding: 40px 10px;
+  padding: 10px 40px;
   margin: 10px auto;
   border-radius: 12px;
   max-width: 1500px;
