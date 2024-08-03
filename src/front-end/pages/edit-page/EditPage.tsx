@@ -2,7 +2,8 @@ import styled from "styled-components";
 import SideToolkit from "./SideToolkit";
 import ToolSelection from "./ToolSection";
 import FlowSenseLogo from "./left-bar/FlowSenseLogo";
-import randomPdf from "/Users/dylannagel/Desktop/flow-sense/src/assets/random.pdf";
+import { useState } from "react";
+import randomPdf from "./random.pdf";
 
 const Container = styled.div`
   width: 100vw;
@@ -14,6 +15,8 @@ const Container = styled.div`
   box-sizing: border-box;
 `;
 
+// function handleMouseUp() {}
+
 function EditPage() {
   return (
     <Container>
@@ -23,12 +26,14 @@ function EditPage() {
         </ToolSelection>
       </SideToolkit>
 
-      <object
-        className="pdf"
-        data={randomPdf}
-        width="800"
-        height="500"
-      ></object>
+      {/* <div onMouseUp={handleMouseUp}>
+        <object
+          className="pdf"
+          data={randomPdf}
+          width="800"
+          height="500"
+        ></object>
+      </div> */}
 
       <SideToolkit>
         <div></div>
