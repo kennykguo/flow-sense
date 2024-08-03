@@ -15,6 +15,15 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import os
 
+import environ
+
+env = environ.Env()
+environ.Env.read_env()  # Read the .env file
+OPENAI_API_KEY = env('OPENAI_API_KEY')
+
+
+
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

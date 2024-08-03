@@ -21,38 +21,38 @@ const PDFViewer = () => {
   useEffect(() => {
     const handleTextDoubleClick = async (event) => {
       const target = event.target;
-    
-      // Check if the double-clicked element is a text span
+
       if (target && target.classList.contains('rpv-core__text-layer-text')) {
         // Remove highlight from previously highlighted span
         if (highlightedSpan) {
           highlightedSpan.classList.remove('highlight');
         }
-    
+
         // Highlight the clicked span
         target.classList.add('highlight');
         setHighlightedSpan(target);
-    
-        // Get the current highlighted text
+
+        // Gather text from the surrounding context
+        const page = target.closest('.rpv-core__page');
+        const spans = Array.from(page.querySelectorAll('.rpv-core__text-layer-text'));
+        const index = spans.indexOf(target);
+
+        const textAbove = spans.slice(Math.max(0, index - 5), index).map(span => span.textContent).join(' ');
+        const textBelow = spans.slice(index + 1, Math.min(spans.length, index + 6)).map(span => span.textContent).join(' ');
         const currentText = target.textContent;
-    
-        // Debugging output
-        console.log('Highlighted text:', currentText);
-    
-        // Send data to the backend
+
         try {
           const response = await api.post('/api/explain/', {
+            text_above: textAbove,
+            text_below: textBelow,
             current_text: currentText
           });
           setGptResponse(response.data.explanation);
         } catch (err) {
-          console.error('Error during API request:', err);
           alert('Failed to get explanation.');
         }
       }
     };
-
-    
 
     const container = viewerRef.current;
     container.addEventListener('dblclick', handleTextDoubleClick);
