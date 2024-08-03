@@ -5,7 +5,7 @@ import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import * as pdfjsLib from 'pdfjs-dist';
 import api from '../api'; // Import the API utility
-import './styles/PDFViewer.css'; // Import CSS file for highlighting
+import '../styles/Home.css'; // Import CSS file for highlighting
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
@@ -83,21 +83,6 @@ const PDFViewer = () => {
     setNote(event.target.value);
   };
 
-  const handleAddToGlossary = () => {
-    if (highlightedSpan) {
-      api.post('/api/notes/', { content: highlightedSpan.textContent.trim(), title: 'Glossary Entry' })
-        .then((res) => {
-          if (res.status === 201) {
-            alert('Glossary entry added!');
-            getNotes(); // Refresh the notes list
-          } else {
-            alert('Failed to add glossary entry.');
-          }
-        })
-        .catch((err) => alert(err));
-    }
-  };
-
   return (
     <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>
       <div
@@ -137,9 +122,6 @@ const PDFViewer = () => {
           <br />
           <input type="submit" value="Submit" />
         </form>
-        <button onClick={handleAddToGlossary} style={{ marginTop: '10px' }}>
-          Add to Glossary
-        </button>
         <h3>Existing Notes</h3>
         <ul>
           {notes.map((note) => (
