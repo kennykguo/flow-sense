@@ -4,7 +4,7 @@ import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import * as pdfjsLib from 'pdfjs-dist';
-import api from '../api'; // Ensure this points to your API utility
+import api from '../api';
 import '../styles/Home.css';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
@@ -73,11 +73,13 @@ const PDFViewer = () => {
     };
 
     const container = viewerRef.current;
-    container.addEventListener('dblclick', handleTextDoubleClick);
+    if (container) {
+      container.addEventListener('dblclick', handleTextDoubleClick);
 
-    return () => {
-      container.removeEventListener('dblclick', handleTextDoubleClick);
-    };
+      return () => {
+        container.removeEventListener('dblclick', handleTextDoubleClick);
+      };
+    }
   }, [highlightedSpan]);
 
   useEffect(() => {
@@ -100,7 +102,7 @@ const PDFViewer = () => {
   const fetchUploadedPapers = () => {
     api.get('/api/papers/')
       .then((res) => {
-        console.log('Fetched papers:', res.data); // Debugging line
+        console.log('Fetched papers:', res.data);
         setUploadedPapers(res.data);
       })
       .catch((err) => alert('Failed to fetch papers.'));
@@ -119,6 +121,8 @@ const PDFViewer = () => {
         if (res.status === 201) {
           alert('Note created!');
           getNotes();
+          setNote('');
+          setTitle('');
         } else {
           alert('Failed to create note.');
         }
@@ -146,6 +150,7 @@ const PDFViewer = () => {
         if (res.status === 201) {
           alert('Comment created!');
           fetchComments(selectedPaperId);
+          setComment('');
         } else {
           alert('Failed to create comment.');
         }
@@ -177,89 +182,69 @@ const PDFViewer = () => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file && file.type === 'application/pdf') {
-        setPdfFile(URL.createObjectURL(file)); // Creates a temporary URL for file preview
-        const formData = new FormData();
-        formData.append('file', file);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', file.name);
 
-        api.post('/api/upload/', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data' // Ensure correct content type
-            }
-        })
+      api.post('/api/upload/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
         .then((res) => {
-            if (res.status === 200) {
-                fetchUploadedPapers(); // Fetch updated list of papers after upload
-            } else {
-                alert('Failed to upload PDF.');
-            }
+          if (res.status === 201) {
+            fetchUploadedPapers();
+            const newPaperId = res.data.id;
+            setSelectedPaperId(newPaperId);
+            setPdfFile(URL.createObjectURL(file));
+            fetchComments(newPaperId);
+          } else {
+            alert('Failed to upload PDF.');
+          }
         })
-        .catch((err) => alert('Failed to upload PDF.'));
+        .catch((err) => {
+          console.error('Upload error:', err);
+          alert('Failed to upload PDF.');
+        });
     } else {
-        alert('Please upload a valid PDF file.');
+      alert('Please upload a valid PDF file.');
     }
+  };
+
+  const handlePaperClick = (paper) => {
+    const filePath = `http://localhost:8000/media/your_upload_directory/${paper.title}`;
+    console.log('File path:', filePath);
+    setPdfFile(filePath);
+    fetchComments(paper.id);
   };
 
   return (
     <ErrorBoundary>
       <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>
-        <div
-          ref={viewerRef}
-          style={{ flex: 1, overflow: 'auto', position: 'relative' }}
-        >
-          <input
-            type="file"
-            accept=".pdf"
-            onChange={handleFileChange}
-            style={{ margin: '10px', display: 'block' }}
-          />
-          {pdfFile && (
-            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`}>
-              <Viewer fileUrl={pdfFile} plugins={[defaultLayoutPluginInstance]} />
-            </Worker>
-          )}
-        </div>
-        <div style={{ width: '300px', padding: '20px' }}>
-          <h2>Notes</h2>
-          <form onSubmit={createNote}>
-            <input
-              type="text"
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={{ width: '100%', marginBottom: '10px' }}
-            />
-            <textarea
-              placeholder="Note content"
-              value={note}
-              onChange={handleNoteChange}
-              style={{ width: '100%', height: '100px', marginBottom: '10px' }}
-            />
-            <button type="submit">Create Note</button>
-          </form>
-          {notes.map((note) => (
-            <div key={note.id}>
-              <h3>{note.title}</h3>
-              <p>{note.content}</p>
-              <button onClick={() => deleteNote(note.id)}>Delete Note</button>
-            </div>
-          ))}
-          <h2>Uploaded Papers</h2>
-          {uploadedPapers.length > 0 ? (
-            uploadedPapers.map((paper) => (
-              <div key={paper.id} style={{ margin: '10px', width: '200px' }}>
-                <a href={paper.file} target="_blank" rel="noopener noreferrer">
-                  <img src={paper.banner_url} alt={paper.title} style={{ width: '100%', height: 'auto' }} />
-                </a>
-                <p>{paper.title}</p>
-                <button onClick={() => setSelectedPaperId(paper.id)}>View Comments</button>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', padding: '10px' }}>
+            {uploadedPapers.map((paper) => (
+              <div key={paper.id} style={{ margin: '5px', padding: '5px', border: '1px solid #ccc', cursor: 'pointer' }} onClick={() => handlePaperClick(paper)}>
+                {paper.title}
               </div>
-            ))
-          ) : (
-            <p>No papers uploaded yet.</p>
-          )}
+            ))}
+          </div>
+          <div ref={viewerRef} style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={handleFileChange}
+              style={{ margin: '10px', display: 'block' }}
+            />
+            {pdfFile && (
+              <Worker workerUrl={`https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`}>
+                <Viewer fileUrl={pdfFile} plugins={[defaultLayoutPluginInstance]} />
+              </Worker>
+            )}
+          </div>
           {selectedPaperId && (
-            <div>
-              <h2>Comments for Paper {selectedPaperId}</h2>
+            <div style={{ padding: '20px', maxHeight: '30vh', overflow: 'auto' }}>
+              <h2>Comments for {uploadedPapers.find(p => p.id === selectedPaperId)?.title}</h2>
               <form onSubmit={createComment}>
                 <textarea
                   placeholder="Add a comment"
@@ -270,19 +255,39 @@ const PDFViewer = () => {
                 <button type="submit">Add Comment</button>
               </form>
               {comments.map((comment) => (
-                <div key={comment.id}>
+                <div key={comment.id} style={{ marginBottom: '10px' }}>
                   <p>{comment.content}</p>
                   <button onClick={() => deleteComment(comment.id)}>Delete Comment</button>
                 </div>
               ))}
             </div>
           )}
-          {gptResponse && (
-            <div>
-              <h2>GPT Explanation</h2>
-              <p>{gptResponse}</p>
+        </div>
+        <div style={{ width: '300px', padding: '20px', borderLeft: '1px solid #ccc' }}>
+          <h2>Notes</h2>
+          <form onSubmit={createNote}>
+            <input
+              type="text"
+              placeholder="Note title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={{ width: '100%', marginBottom: '10px' }}
+            />
+            <textarea
+              placeholder="Note content"
+              value={note}
+              onChange={handleNoteChange}
+              style={{ width: '100%', height: '100px', marginBottom: '10px' }}
+            />
+            <button type="submit">Add Note</button>
+          </form>
+          {notes.map((note) => (
+            <div key={note.id} style={{ marginBottom: '10px' }}>
+              <h3>{note.title}</h3>
+              <p>{note.content}</p>
+              <button onClick={() => deleteNote(note.id)}>Delete Note</button>
             </div>
-          )}
+          ))}
         </div>
       </div>
     </ErrorBoundary>

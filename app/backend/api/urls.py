@@ -13,4 +13,3 @@ urlpatterns = [
     path("explain/", views.explain_text, name="explain_text"),
     path('upload/', views.FileUploadView.as_view(), name='file-upload'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

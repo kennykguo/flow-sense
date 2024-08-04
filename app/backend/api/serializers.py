@@ -21,10 +21,13 @@ class NoteSerializer(serializers.ModelSerializer):
 class ResearchPaperSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResearchPaper
-        fields = ['id', 'title', 'file', 'banner_url', 'uploaded_at']
+        fields = ['id', 'file', 'title']  # Include file and any other necessary fields
+
 
 class CommentSerializer(serializers.ModelSerializer):
+    author_username = serializers.ReadOnlyField(source='author.username')
+
     class Meta:
         model = Comment
-        fields = ["id", "paper", "content", "created_at", "author"]
+        fields = ["id", "paper", "content", "created_at", "author", "author_username"]
         extra_kwargs = {"author": {"read_only": True}}

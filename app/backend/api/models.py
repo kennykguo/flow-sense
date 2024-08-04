@@ -11,9 +11,8 @@ class Note(models.Model):
         return self.title
 
 class ResearchPaper(models.Model):
-    title = models.CharField(max_length=100)
     file = models.FileField(upload_to='your_upload_directory/')
-    banner_url = models.URLField(blank=True)  # Add this if you want to store a URL for a paper's banner
+    title = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -1,113 +1,62 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
-from rest_framework import generics
-from .serializers import UserSerializer, NoteSerializer
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import User
-from rest_framework import generics
+from rest_framework import generics, views, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-import openai
-import environ
-import os
-import time
+from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import UserSerializer, NoteSerializer, ResearchPaperSerializer, CommentSerializer
 from .models import Note, ResearchPaper, Comment
-from rest_framework import views
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.parsers import MultiPartParser, FormParser
-import os
-
-
-
-class NoteListCreate(generics.ListCreateAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-    def perform_create(self, serializer):
-        if serializer.is_valid():
-            serializer.save(author=self.request.user)
-        else:
-            print(serializer.errors)
-
-
-class NoteDelete(generics.DestroyAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-
-class CreateUserView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [AllowAny]
-
-
-
-
-
-from django.shortcuts import render
-from django.contrib.auth.models import User
-from rest_framework import generics
-from .serializers import UserSerializer, NoteSerializer
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note
-
-
-class NoteListCreate(generics.ListCreateAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-    def perform_create(self, serializer):
-        if serializer.is_valid():
-            serializer.save(author=self.request.user)
-        else:
-            print(serializer.errors)
-
-
-class NoteDelete(generics.DestroyAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-
-class CreateUserView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [AllowAny]
-
-
-
-
-
-
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 import openai
 import environ
 import os
 import time
+
 
 # Load environment variables
 env = environ.Env()
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(env_path):
+    environ.Env.read_env(env_path)
+    print(".env file loaded from:", env_path)
+else:
+    print(".env file not found at:", env_path)
+
+# Set OpenAI API key
+api_key = env('OPENAI_API_KEY')
+openai.api_key = api_key
+
+
+class NoteListCreate(generics.ListCreateAPIView):
+    serializer_class = NoteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Note.objects.filter(author=user)
+
+    def perform_create(self, serializer):
+        if serializer.is_valid():
+            serializer.save(author=self.request.user)
+        else:
+            print(serializer.errors)
+
+
+class NoteDelete(generics.DestroyAPIView):
+    serializer_class = NoteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Note.objects.filter(author=user)
+
+
+class CreateUserView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [AllowAny]
+
 
 # Check if .env file exists and load it
 env_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -188,28 +137,6 @@ def explain_text(request):
 print(".env file exists:", os.path.exists(env_path))
 
 
-
-
-class NoteListCreate(generics.ListCreateAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
-    def perform_create(self, serializer):
-        if serializer.is_valid():
-            serializer.save(author=self.request.user)
-
-class NoteDelete(generics.DestroyAPIView):
-    serializer_class = NoteSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Note.objects.filter(author=user)
-
 class ResearchPaperListView(generics.ListCreateAPIView):
     queryset = ResearchPaper.objects.all()
     serializer_class = ResearchPaperSerializer
@@ -217,68 +144,13 @@ class ResearchPaperListView(generics.ListCreateAPIView):
 class ResearchPaperListCreate(generics.ListCreateAPIView):
     serializer_class = ResearchPaperSerializer
     permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return ResearchPaper.objects.all()
-
-class ResearchPaperDetail(generics.RetrieveAPIView):
-    serializer_class = ResearchPaperSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return ResearchPaper.objects.all()
-
-class CommentListCreate(generics.ListCreateAPIView):
-    serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        paper_id = self.kwargs['pk']
-        return Comment.objects.filter(paper_id=paper_id)
-
-    def perform_create(self, serializer):
-        paper = get_object_or_404(ResearchPaper, pk=self.kwargs['pk'])
-        serializer.save(author=self.request.user, paper=paper)
-
-class CommentDelete(generics.DestroyAPIView):
-    serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Comment.objects.filter(author=self.request.user)
-
-# class FileUploadView(views.APIView):
-#     parser_classes = (MultiPartParser, FormParser)
-
-#     def post(self, request, *args, **kwargs):
-#         file = request.FILES.get('file')
-#         if file:
-#             # Save the file and create ResearchPaper instance
-#             paper = ResearchPaper.objects.create(file=file, title=file.name)
-#             return Response({'id': paper.id, 'title': paper.title, 'file': paper.file.url}, status=200)
-#         return Response({'error': 'No file provided'}, status=400)
-class FileUploadView(generics.CreateAPIView):
     queryset = ResearchPaper.objects.all()
-    serializer_class = ResearchPaperSerializer
-    parser_classes = [MultiPartParser, FormParser]
-
-
-# Research Paper Views
-class ResearchPaperListCreate(generics.ListCreateAPIView):
-    serializer_class = ResearchPaperSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return ResearchPaper.objects.all()
 
 class ResearchPaperDetail(generics.RetrieveAPIView):
     serializer_class = ResearchPaperSerializer
     permission_classes = [IsAuthenticated]
+    queryset = ResearchPaper.objects.all()
 
-    def get_queryset(self):
-        return ResearchPaper.objects.all()
-
-# Comment Views
 class CommentListCreate(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
@@ -291,31 +163,25 @@ class CommentListCreate(generics.ListCreateAPIView):
         paper = get_object_or_404(ResearchPaper, pk=self.kwargs['pk'])
         serializer.save(author=self.request.user, paper=paper)
 
+
 class CommentDelete(generics.DestroyAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Comment.objects.filter(author=self.request.user)
-    
 
-class FileUploadView(views.APIView):
+import logging
+
+class FileUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):
-        file = request.FILES.get('file')
-        if file:
-            # Define the path to the upload directory
-            upload_dir = os.path.join(os.path.dirname(__file__), 'your_upload_directory')
-            if not os.path.exists(upload_dir):
-                os.makedirs(upload_dir)
-
-            # Define the full path for the uploaded file
-            file_path = os.path.join(upload_dir, file.name)
-            # Save the uploaded file
-            with open(file_path, 'wb+') as destination:
-                for chunk in file.chunks():
-                    destination.write(chunk)
-                    
-            return Response({'message': 'File uploaded successfully'}, status=status.HTTP_200_OK)
-        return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+        file_serializer = ResearchPaperSerializer(data=request.data)
+        if file_serializer.is_valid():
+            file_serializer.save()
+            uploaded_file = file_serializer.instance.file
+            logging.info(f"File saved at: {uploaded_file.path}")
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
