@@ -164,6 +164,7 @@ class CommentListCreate(generics.ListCreateAPIView):
         serializer.save(author=self.request.user, paper=paper)
 
 
+
 class CommentDelete(generics.DestroyAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
