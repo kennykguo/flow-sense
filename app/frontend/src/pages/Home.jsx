@@ -1,297 +1,272 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Worker, Viewer } from '@react-pdf-viewer/core';
-import '@react-pdf-viewer/core/lib/styles/index.css';
-import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
-import * as pdfjsLib from 'pdfjs-dist';
-import api from '../api';
-import '../styles/Home.css';
+import React, { useEffect, useRef, useState } from "react";
+import { Worker, Viewer } from "@react-pdf-viewer/core";
+import "@react-pdf-viewer/core/lib/styles/index.css";
+import "@react-pdf-viewer/default-layout/lib/styles/index.css";
+import { defaultLayoutPlugin } from "@react-pdf-viewer/default-layout";
+import * as pdfjsLib from "pdfjs-dist";
+import api from "../api"; // Import the API utility
+import "../styles/Home.css"; // Import CSS file for highlighting
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import logo from "/logo.png";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error('Error caught in ErrorBoundary:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <h1>Something went wrong.</h1>;
-    }
-
-    return this.props.children;
-  }
-}
-
 const PDFViewer = () => {
+  const navigate = useNavigate();
   const viewerRef = useRef(null);
   const [highlightedSpan, setHighlightedSpan] = useState(null);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
   const [notes, setNotes] = useState([]);
-  const [title, setTitle] = useState('');
-  const [gptResponse, setGptResponse] = useState('');
-  const [pdfFile, setPdfFile] = useState(null);
-  const [uploadedPapers, setUploadedPapers] = useState([]);
-  const [selectedPaperId, setSelectedPaperId] = useState(null);
-  const [comment, setComment] = useState('');
-  const [comments, setComments] = useState([]);
+  const [title, setTitle] = useState("");
+  const [gptResponse, setGptResponse] = useState("");
   const defaultLayoutPluginInstance = defaultLayoutPlugin();
 
   useEffect(() => {
     const handleTextDoubleClick = async (event) => {
       const target = event.target;
 
-      if (target && target.classList.contains('rpv-core__text-layer-text')) {
+      // Check if the double-clicked element is a text span
+      if (target && target.classList.contains("rpv-core__text-layer-text")) {
+        // Remove highlight from previously highlighted span
         if (highlightedSpan) {
-          highlightedSpan.classList.remove('highlight');
+          highlightedSpan.classList.remove("highlight");
         }
 
-        target.classList.add('highlight');
+        // Highlight the clicked span
+        target.classList.add("highlight");
         setHighlightedSpan(target);
 
+        // Get the current highlighted text
         const currentText = target.textContent;
 
-        console.log('Highlighted text:', currentText);
+        // Debugging output
+        console.log("Highlighted text:", currentText);
 
+        // Send data to the backend
         try {
-          const response = await api.post('/api/explain/', { current_text: currentText });
+          const response = await api.post("/api/explain/", {
+            current_text: currentText,
+          });
           setGptResponse(response.data.explanation);
         } catch (err) {
-          console.error('Error during API request:', err);
-          alert('Failed to get explanation.');
+          console.error("Error during API request:", err);
+          alert("Failed to get explanation.");
         }
       }
     };
 
     const container = viewerRef.current;
-    if (container) {
-      container.addEventListener('dblclick', handleTextDoubleClick);
+    container.addEventListener("dblclick", handleTextDoubleClick);
 
-      return () => {
-        container.removeEventListener('dblclick', handleTextDoubleClick);
-      };
-    }
+    return () => {
+      container.removeEventListener("dblclick", handleTextDoubleClick);
+    };
   }, [highlightedSpan]);
 
   useEffect(() => {
+    // Fetch existing notes from the backend when the component mounts
     getNotes();
-    fetchUploadedPapers();
   }, []);
 
-  useEffect(() => {
-    if (selectedPaperId) {
-      fetchComments(selectedPaperId);
-    }
-  }, [selectedPaperId]);
-
   const getNotes = () => {
-    api.get('/api/notes/')
+    api
+      .get("/api/notes/")
       .then((res) => setNotes(res.data))
-      .catch((err) => alert('Failed to fetch notes.'));
-  };
-
-  const fetchUploadedPapers = () => {
-    api.get('/api/papers/')
-      .then((res) => {
-        console.log('Fetched papers:', res.data);
-        setUploadedPapers(res.data);
-      })
-      .catch((err) => alert('Failed to fetch papers.'));
-  };
-
-  const fetchComments = (paperId) => {
-    api.get(`/api/papers/${paperId}/comments/`)
-      .then((res) => setComments(res.data))
-      .catch((err) => alert('Failed to fetch comments.'));
+      .catch((err) => alert(err));
   };
 
   const createNote = (e) => {
     e.preventDefault();
-    api.post('/api/notes/', { content: note, title })
+    api
+      .post("/api/notes/", { content: note, title })
       .then((res) => {
         if (res.status === 201) {
-          alert('Note created!');
-          getNotes();
-          setNote('');
-          setTitle('');
+          getNotes(); // Refresh the notes list
         } else {
-          alert('Failed to create note.');
+          alert("Failed to create note.");
         }
       })
-      .catch((err) => alert('Failed to create note.'));
+      .catch((err) => alert(err));
   };
 
   const deleteNote = (id) => {
-    api.delete(`/api/notes/delete/${id}/`)
+    api
+      .delete(`/api/notes/delete/${id}/`)
       .then((res) => {
         if (res.status === 204) {
-          alert('Note deleted!');
-          getNotes();
+          getNotes(); // Refresh the notes list
         } else {
-          alert('Failed to delete note.');
+          alert("Failed to delete note.");
         }
       })
-      .catch((err) => alert('Failed to delete note.'));
-  };
-
-  const createComment = (e) => {
-    e.preventDefault();
-    api.post(`/api/papers/${selectedPaperId}/comments/`, { content: comment })
-      .then((res) => {
-        if (res.status === 201) {
-          alert('Comment created!');
-          fetchComments(selectedPaperId);
-          setComment('');
-        } else {
-          alert('Failed to create comment.');
-        }
-      })
-      .catch((err) => alert('Failed to create comment.'));
-  };
-
-  const deleteComment = (id) => {
-    api.delete(`/api/comments/delete/${id}/`)
-      .then((res) => {
-        if (res.status === 204) {
-          alert('Comment deleted!');
-          fetchComments(selectedPaperId);
-        } else {
-          alert('Failed to delete comment.');
-        }
-      })
-      .catch((err) => alert('Failed to delete comment.'));
+      .catch((err) => alert(err));
   };
 
   const handleNoteChange = (event) => {
     setNote(event.target.value);
   };
 
-  const handleCommentChange = (event) => {
-    setComment(event.target.value);
-  };
-
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', file.name);
-
-      api.post('/api/upload/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-        .then((res) => {
-          if (res.status === 201) {
-            fetchUploadedPapers();
-            const newPaperId = res.data.id;
-            setSelectedPaperId(newPaperId);
-            setPdfFile(URL.createObjectURL(file));
-            fetchComments(newPaperId);
-          } else {
-            alert('Failed to upload PDF.');
-          }
-        })
-        .catch((err) => {
-          console.error('Upload error:', err);
-          alert('Failed to upload PDF.');
-        });
-    } else {
-      alert('Please upload a valid PDF file.');
-    }
-  };
-
-  const handlePaperClick = (paper) => {
-    const filePath = `http://localhost:8000/media/your_upload_directory/${paper.title}`;
-    console.log('File path:', filePath);
-    setPdfFile(filePath);
-    fetchComments(paper.id);
-  };
-
   return (
-    <ErrorBoundary>
-      <div style={{ height: '100vh', width: '100vw', display: 'flex' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', padding: '10px' }}>
-            {uploadedPapers.map((paper) => (
-              <div key={paper.id} style={{ margin: '5px', padding: '5px', border: '1px solid #ccc', cursor: 'pointer' }} onClick={() => handlePaperClick(paper)}>
-                {paper.title}
-              </div>
-            ))}
-          </div>
-          <div ref={viewerRef} style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={handleFileChange}
-              style={{ margin: '10px', display: 'block' }}
-            />
-            {pdfFile && (
-              <Worker workerUrl={`https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`}>
-                <Viewer fileUrl={pdfFile} plugins={[defaultLayoutPluginInstance]} />
-              </Worker>
-            )}
-          </div>
-          {selectedPaperId && (
-            <div style={{ padding: '20px', maxHeight: '30vh', overflow: 'auto' }}>
-              <h2>Comments for {uploadedPapers.find(p => p.id === selectedPaperId)?.title}</h2>
-              <form onSubmit={createComment}>
-                <textarea
-                  placeholder="Add a comment"
-                  value={comment}
-                  onChange={handleCommentChange}
-                  style={{ width: '100%', height: '100px', marginBottom: '10px' }}
-                />
-                <button type="submit">Add Comment</button>
-              </form>
-              {comments.map((comment) => (
-                <div key={comment.id} style={{ marginBottom: '10px' }}>
-                  <p>{comment.content}</p>
-                  <button onClick={() => deleteComment(comment.id)}>Delete Comment</button>
-                </div>
-              ))}
-            </div>
-          )}
+    <div style={{ height: "100vh", width: "100vw", display: "flex" }}>
+      <div
+        ref={viewerRef}
+        style={{ flex: 1, overflow: "auto", position: "relative" }}
+      >
+        <Worker
+          workerUrl={`https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`}
+        >
+          <Viewer
+            fileUrl="./example_research_paper.pdf"
+            plugins={[defaultLayoutPluginInstance]}
+          />
+        </Worker>
+      </div>
+
+      <StyledContainer>
+        <div className="button-container">
+          <button onClick={() => navigate("/landing")}>
+            <img src={logo} alt="logo" />
+            FlowSense
+          </button>
         </div>
-        <div style={{ width: '300px', padding: '20px', borderLeft: '1px solid #ccc' }}>
-          <h2>Notes</h2>
-          <form onSubmit={createNote}>
-            <input
-              type="text"
-              placeholder="Note title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={{ width: '100%', marginBottom: '10px' }}
-            />
-            <textarea
-              placeholder="Note content"
-              value={note}
-              onChange={handleNoteChange}
-              style={{ width: '100%', height: '100px', marginBottom: '10px' }}
-            />
-            <button type="submit">Add Note</button>
-          </form>
+
+        <h3>Create a Note</h3>
+        <form onSubmit={createNote}>
+          <label htmlFor="title">Title:</label>
+          <br />
+          <input
+            type="text"
+            id="title"
+            name="title"
+            required
+            onChange={(e) => setTitle(e.target.value)}
+            value={title}
+          />
+          <label htmlFor="content">Content:</label>
+          <br />
+          <textarea
+            id="content"
+            name="content"
+            required
+            value={note}
+            onChange={handleNoteChange}
+            style={{ width: "100%", height: "150px" }}
+          ></textarea>
+          <br />
+          <input type="submit" value="Submit" />
+        </form>
+
+        {gptResponse && (
+          <div style={{ marginTop: "20px" }}>
+            <h3>GPT Explanation</h3>
+            <p>{gptResponse}</p>
+          </div>
+        )}
+
+        <h3>Existing Notes</h3>
+        <div className="note-container">
           {notes.map((note) => (
-            <div key={note.id} style={{ marginBottom: '10px' }}>
-              <h3>{note.title}</h3>
-              <p>{note.content}</p>
-              <button onClick={() => deleteNote(note.id)}>Delete Note</button>
-            </div>
+            <StyledNote key={note.id}>
+              <h2>{note.title}</h2>
+              <h3>{note.content}</h3>
+              <div className="delete-button-contain">
+                <button onClick={() => deleteNote(note.id)}>Delete</button>
+              </div>
+            </StyledNote>
           ))}
         </div>
-      </div>
-    </ErrorBoundary>
+      </StyledContainer>
+    </div>
   );
 };
 
 export default PDFViewer;
+
+const StyledContainer = styled.div`
+  width: 300px;
+  padding: 15px;
+  border-left: 1px solid #ddd;
+  background: #f5f5f5;
+  overflow: auto;
+
+  .button-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 20px;
+    border-bottom: 1px solid black;
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+
+      img {
+        width: 45px;
+      }
+      border: none;
+      background: none;
+      font-size: 30px;
+      color: linear-gradient(
+        to right,
+        rgba(34, 193, 195, 0.7),
+        rgba(253, 187, 45, 0.7)
+      );
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+
+  .note-container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+    padding-left: 15px;
+    padding-right: 15px;
+
+    .delete-button-contain {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 16px;
+
+      button {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 5px;
+
+        &:hover {
+          cursor: pointer;
+        }
+      }
+    }
+  }
+`;
+
+const StyledNote = styled.div`
+  width: 100%;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 400;
+  }
+`;

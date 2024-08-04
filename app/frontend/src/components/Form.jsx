@@ -54,6 +54,9 @@ function Form({ route, method }) {
             <button className="form-button" type="submit">
                 {name}
             </button>
+            <button className="back-nav" onClick={() => navigate('/landing')}>
+                Return to Previous Page
+            </button>
         </form>
     );
 }
