@@ -57,3 +57,6 @@ FlowSense was developed within a 36-hour period during Hack the 6ix 2024 by:
 - Dylan Nagel
 - Simon Hampton
 - Jason Sun
+
+## Watch the Demo
+Check out our demo video on YouTube to see FlowSense in action: [Watch the Demo](https://youtu.be/Ch5ayhHLT34)
